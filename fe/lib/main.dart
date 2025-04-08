@@ -6,45 +6,34 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: CounterScreen(),
-    );
+    return MaterialApp(home: EnglishLearningScreen());
   }
 }
 
-class CounterScreen extends StatefulWidget {
-  const CounterScreen({super.key});
-  @override
-  _CounterScreenState createState() => _CounterScreenState();
-}
-
-class _CounterScreenState extends State<CounterScreen> {
-  int _counter = 0;
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+class EnglishLearningScreen extends StatelessWidget {
+  const EnglishLearningScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Counter App'),
-      ), 
+      appBar: AppBar(title: const Text('English Learning App')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('You have pushed the button this many times:', style: TextStyle(fontSize: 20)),
-            Text('$_counter', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20),
+            const Text(
+              'Welcome to English Learning App!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _incrementCounter,
-              child: const Text('Increment Counter'),
+              onPressed: () {
+                // Navigate to lessons or other features
+              },
+              child: const Text('Start Learning'),
             ),
           ],
         ),
@@ -52,4 +41,3 @@ class _CounterScreenState extends State<CounterScreen> {
     );
   }
 }
-      

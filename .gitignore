@@ -1,0 +1,93 @@
+# ====================
+# GLOBAL
+# ====================
+*.log
+*.env
+.env.*
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+*.DS_Store
+*.swp
+
+# Python venv
+venv/
+env/
+.venv/
+
+# ====================
+# BACKEND & AI (FastAPI + AI modules)
+# ====================
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# PyInstaller
+*.spec
+
+# Pip environment
+pip-log.txt
+
+# mypy
+.mypy_cache/
+
+# Pytest
+.pytest_cache/
+
+# coverage
+htmlcov/
+.coverage
+.cache
+
+# ====================
+# FRONTEND (Flutter)
+# ====================
+build/
+.dart_tool/
+.packages
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+generated_plugin_registrant.dart
+
+# iOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.symlinks
+ios/Pods
+ios/Runner.xcworkspace
+ios/build/
+
+# Android
+android/.gradle/
+android/captures/
+android/build/
+
+# macOS
+macos/Flutter/ephemeral/
+macos/build/
+
+# Web
+web/build/
+frontend/build/
+
+# ====================
+# IDE / OS Files
+# ====================
+.idea/
+.vscode/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ====================
+# Docker / Database
+# ====================
+docker/*.pid
+postgres_data/
+docker-compose.override.yml
