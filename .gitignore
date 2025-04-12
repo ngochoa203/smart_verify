@@ -91,3 +91,5 @@ frontend/build/
 docker/*.pid
 postgres_data/
 docker-compose.override.yml
+config/secrets.json
+docker/secrets/
