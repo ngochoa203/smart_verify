@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,60 +12,7 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = true;
-  bool _loading = false;
-
-  Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _loading = true);
-
-    final uri = Uri.parse(
-      'https://your-api-url.com/login',
-    ); // Replace with your real API
-    try {
-      final response = await http.post(
-        uri,
-        body: {
-          'user_name': _usernameController.text,
-          'password': _passwordController.text,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final userData = json.decode(response.body);
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Đăng nhập thành công!')));
-
-        switch (userData['role']) {
-          case 'admin':
-            Navigator.pushReplacementNamed(context, '/admin');
-            break;
-          case 'tourist':
-            Navigator.pushReplacementNamed(context, '/');
-            break;
-          case 'business':
-            Navigator.pushReplacementNamed(context, '/business');
-            break;
-          default:
-            Navigator.pushReplacementNamed(context, '/');
-        }
-      } else {
-        throw Exception('Invalid credentials');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Đăng nhập thất bại. Vui lòng kiểm tra tên đăng nhập và mật khẩu.',
-          ),
-        ),
-      );
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
+  final bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: _loading ? null : _login,
+                      onPressed: _loading ? null : () {},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         minimumSize: const Size.fromHeight(48),
