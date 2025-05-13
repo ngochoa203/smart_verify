@@ -2,7 +2,7 @@ from ocr_reader import extract_text
 from brand_classifier import predict_brand
 from cleaner import clean_text
 
-def test_ocr_pipeline(image_path: str, expected_brand: str) -> None:
+def test_ocr_pipeline(image_path: str, expected_brand: bool) -> None:
     """
     Test the OCR pipeline by extracting text from an image and predicting the brand.
 
@@ -27,4 +27,4 @@ def test_ocr_pipeline(image_path: str, expected_brand: str) -> None:
     
     print(f"Test passed! Extracted text: {cleaned_text}, Predicted brand: {predicted_brand}")
 
-test_ocr_pipeline("/src/image.jpg")
+test_ocr_pipeline("src/image_test.jpg", 1)
