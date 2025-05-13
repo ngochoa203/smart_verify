@@ -10,7 +10,7 @@ __pycache__/
 *.db
 *.DS_Store
 *.swp
-
+log/
 # Python venv
 venv/
 env/

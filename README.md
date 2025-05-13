@@ -1,1 +1,1 @@
-# Quizizz
+# SmartVerify
