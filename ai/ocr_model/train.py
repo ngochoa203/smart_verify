@@ -35,7 +35,7 @@ report = classification_report(y_test, y_pred)
 cm = confusion_matrix(y_test, y_pred)
 
 # Ghi ra file kết quả
-with open("train_report.txt", "w") as f:
+with open("log/train_report.txt", "w") as f:
     f.write(f"Accuracy: {accuracy:.4f}\n\n")
     f.write("Classification Report:\n")
     f.write(report + "\n")
