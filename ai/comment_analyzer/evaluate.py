@@ -17,7 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 # Load và xử lý dữ liệu test
-df = pd.read_csv("data/comments.csv")
+df = pd.read_csv("data//comments.csv")
 texts = df["comment"].astype(str).tolist()
 labels = df["label"].tolist()
 
