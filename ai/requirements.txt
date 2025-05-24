@@ -4,5 +4,5 @@ pandas
 scikit-learn
 matplotlib
 numpy
-transformers==4.46.3
+transformers==4.8.0
 maturin==1.8.4
