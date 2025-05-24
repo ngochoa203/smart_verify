@@ -18,7 +18,7 @@ CREATE TABLE users (
     avatar_url TEXT,
     is_verified BOOLEAN DEFAULT FALSE,
     password_hash TEXT NOT NULL,
-    role INT DEFAULT 0 CHECK (role IN (0,1)), -- 0: user, 1: business
+    role BOOLEAN DEFAULT FALSE -- 0: user, 1: business
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
