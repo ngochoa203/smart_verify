@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS favorites CASCADE;
 DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS product_units CASCADE;
 DROP TABLE IF EXISTS product_images CASCADE;
+DROP TABLE IF EXISTS own_products CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS sellers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
@@ -44,7 +45,8 @@ CREATE TABLE admins (
 
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
-    seller_id INT NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
+    seller_id INT REFERENCES sellers(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
     brand TEXT,
@@ -54,14 +56,12 @@ CREATE TABLE products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
 CREATE TABLE product_images (
     id SERIAL PRIMARY KEY,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    seller_id INT NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    -- UNIQUE(product_id, image_url) -- Mỗi sản phẩm có thể có nhiều hình ảnh khác nhau;
+    UNIQUE(product_id, image_url)
 );
 
 CREATE TABLE product_units (
@@ -70,8 +70,17 @@ CREATE TABLE product_units (
     qr_code TEXT UNIQUE NOT NULL,
     blockchain_hash TEXT UNIQUE NOT NULL,
     is_used BOOLEAN DEFAULT FALSE,
-    used_at TIMESTAMP,
+    used_at TIMESTAMP DEFAULT NONE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE own_products (
+    id SERIAL PRIMARY KEY,
+    product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    is_seller BOOLEAN NOT NULL DEFAULT TRUE,  -- TRUE = seller, FALSE = user
+    owner_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (product_id, is_seller, owner_id)
 );
 
 CREATE TABLE comments (
@@ -79,7 +88,7 @@ CREATE TABLE comments (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
-    sentiment_score FLOAT,
+    sentiment INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
