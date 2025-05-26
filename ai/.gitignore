@@ -1,0 +1,36 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+.env
+*.env
+
+# Ignore model and tokenization folders
+comment_analyzer/phobert_sentiment/
+
+# Ignore ZIP files (including sentiment.zip)
+*.zip
+
+# (Optional) Ignore large model binaries if generated at runtime
+*.safetensors
+*.pt
+*.ckpt
+*.pkl
+
+# (Optional) Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# (Optional) Ignore VSCode settings or other IDE folders
+.vscode/
+.idea/
+
+# Keep resource folders but ignore their contents except placeholder
+res/data/orc/*
+!res/data/orc/.gitkeep
+
+res/images/*
+!res/images/.gitkeep
