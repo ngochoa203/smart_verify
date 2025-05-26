@@ -41,6 +41,8 @@ htmlcov/
 .coverage
 .cache
 
+res/images/
+res/qrcode/
 # ====================
 # FRONTEND (Flutter)
 # ====================
