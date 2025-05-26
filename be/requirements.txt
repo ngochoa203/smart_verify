@@ -17,7 +17,7 @@ passlib==1.7.4
 python-jose==3.4.0
 PyJWT==2.9.0
 itsdangerous==2.2.0
-python-multipart==0.0.17
+python-multipart==0.0.18
 email_validator==2.2.0
 
 # --- Database ---
@@ -36,7 +36,7 @@ orjson==3.10.11
 ujson==5.10.0
 
 # --- CLI, Templating, Utilities ---
-Jinja2==3.1.4
+Jinja2==3.1.6
 MarkupSafe==3.0.2
 click==8.1.7
 typer==0.13.0
