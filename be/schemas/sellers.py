@@ -16,7 +16,7 @@ class SellerCreate(Seller):
 
 class SellerResponse(Seller):
     id: int
-    created_at: Optional[datetime] = datetime
+    created_at: datetime
     
     class Config:
         from_attributes = True

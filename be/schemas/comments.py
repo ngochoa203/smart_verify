@@ -15,13 +15,13 @@ class Create(Comment):
     product_id: int
     content: str
     sentiment: Optional[int] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime
 
 class CommentResponse(Comment):
     id: Optional[int] = None
     user_name: Optional[str] = None
     user_avatar: Optional[str] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime
     sentiment: Optional[int] = None
 
     class Config:

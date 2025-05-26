@@ -18,7 +18,7 @@ class Order(BaseModel):
     total_amount: Optional[int] = None
     status: Optional[str] = 0
     blockchain_hash: Optional[str] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime
 
     items: List[OrderItem] = []
 

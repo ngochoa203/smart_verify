@@ -10,7 +10,7 @@ class User(BaseModel):
     is_active: Optional[bool] = True
 
 class UserCreate(User):
-    password_hash: str
+    password_hash: Optional[str] = None
 
 class UserUpdate(User):
     phone: Optional[str] = None
@@ -21,7 +21,7 @@ class UserUpdate(User):
 
 class UserResponse(User):
     id: int
-    created_at: Optional[datetime] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

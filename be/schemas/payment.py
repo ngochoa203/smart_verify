@@ -14,12 +14,12 @@ class PaymentCreate(PaymentBase):
 class PaymentUpdate(BaseModel):
     status: Optional[bool] = None
     transaction_id: Optional[str] = None
-    paid_at: Optional[datetime] = None
+    paid_at: datetime
 
 class PaymentResponse(PaymentBase):
     id: int
     status: bool
-    paid_at: Optional[datetime] = None
+    paid_at: datetime
     created_at: datetime
 
     class Config:
