@@ -72,7 +72,7 @@ async def get_product_by_user_id(user_id: int, db: AsyncConnection = Depends(get
 @router.delete("/product/delete/{product_id}")
 async def delete_product_by_id(product_id: int, db: AsyncConnection = Depends(get_connection)):
     product = await delete_product(db, product_id)
-    if product == 2:
+    if not product:
         raise HTTPException(status_code=401, detail="Error or not found")
     return {"message":"Delete Successful!"}
 

@@ -1,28 +1,23 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
     
-class Comment(BaseModel):
-    product_id: int
-    content: str
-
-    class Config:
-        from_attributes = True
-
-class Create(Comment):
-    id: Optional[int] = None
+class CommentCreate(BaseModel):
     user_id: int
     product_id: int
     content: str
-    sentiment: Optional[int] = None
-    created_at: datetime
 
-class CommentResponse(Comment):
+class CommentResponse(BaseModel):
     id: Optional[int] = None
-    user_name: Optional[str] = None
-    user_avatar: Optional[str] = None
-    created_at: datetime
+    username: Optional[str] = None
+    avatar_url: Optional[str] = None
+    product_id: Optional[int] = None
+    product_name: Optional[str] = None
+    product_image: Optional[List[str]] = None
+    price: Optional[int] = None
+    content: str
     sentiment: Optional[int] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True
