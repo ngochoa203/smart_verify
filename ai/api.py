@@ -4,11 +4,6 @@ from comment_analyzer.predict import predict_sentiment
 # from label_checker.model import check_label
 # from ocr_model.ocr_reader import read_ocr
 # from risk_scoring.model import get_risk_score
-
-app = FastAPI()
-
-
-
 app = FastAPI()
 
 class SentimentRequest(BaseModel):
