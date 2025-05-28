@@ -1,9 +1,10 @@
+import json
 import os
 from typing import List
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from psycopg import AsyncConnection
-from models.products import add_product, get_all_products, get_product_by_id, get_products_by_seller, get_products_by_user, update_product, delete_product
-from schemas.products import Product, ProductUpdate
+from models.products import add_product, get_all_products, get_product_by_id, get_products_by_seller, get_products_by_user, delete_product
+from schemas.products import Product, ProductVariantCreate
 from models.database import get_connection
 from dotenv import load_dotenv
 
@@ -15,29 +16,35 @@ async def create_product(
     name: str = Form(...),
     description: str = Form(...),
     brand: str = Form(...),
-    category: str = Form(...),
+    category_id: int = Form(...),
     price: int = Form(...),
-    quantity: int = Form(...),
     is_seller: bool = Form(...),
     owner_id: int = Form(...),
-    images: List[UploadFile] = File(...),
+    variants: List[str] = Form(...),
+    images: List[UploadFile] = File([]),
     db: AsyncConnection = Depends(get_connection)
 ):
+    try:
+        parsed_variants = [ProductVariantCreate(**json.loads(v)) for v in variants]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid variant format: {str(e)}")
     image_list = [await img.read() for img in images]
+
     product_data = {
         "name": name,
         "description": description,
         "brand": brand,
-        "category": category,
+        "category_id": category_id,
         "price": price,
-        "quantity": quantity
     }
+
     result = await add_product(
         db=db,
         product_data=product_data,
         is_seller=is_seller,
         owner_id=owner_id,
-        images=image_list
+        images=image_list,
+        variants=parsed_variants
     )
     return result
 
@@ -75,10 +82,3 @@ async def delete_product_by_id(product_id: int, db: AsyncConnection = Depends(ge
     if not product:
         raise HTTPException(status_code=401, detail="Error or not found")
     return {"message":"Delete Successful!"}
-
-@router.put("/product/update/{product_id}", response_model=ProductUpdate)
-async def upadte_product_info(product_id: int, product_data: ProductUpdate, db: AsyncConnection = Depends(get_connection)):
-    updated = await update_product(db, product_id, product_data)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Not found or updated failed")
-    return 
