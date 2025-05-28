@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS product_units CASCADE;
 DROP TABLE IF EXISTS product_images CASCADE;
 DROP TABLE IF EXISTS own_products CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS categories CASCADE;
+DROP TABLE IF EXISTS product_variants CASCADE;
 DROP TABLE IF EXISTS sellers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS admins CASCADE;
@@ -42,6 +44,12 @@ CREATE TABLE admins (
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    parent_id INT REFERENCES categories(id) ON DELETE SET NULL
+);
+INSERT INTO categories (name, parent_id) VALUES ('Thời Trang', NULL);
 
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
@@ -50,10 +58,19 @@ CREATE TABLE products (
     name TEXT NOT NULL,
     description TEXT,
     brand TEXT,
-    category TEXT,
-    price INT NOT NULL,
-    quantity INT DEFAULT 0,
+    category_id INT REFERENCES categories(id) ON DELETE SET NULL,
+    price INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE product_variants (
+    id SERIAL PRIMARY KEY,
+    product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    size TEXT NOT NULL,
+    color TEXT NOT NULL,
+    quantity INT NOT NULL,
+    price INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(product_id, size, color)
 );
 
 CREATE TABLE product_images (
@@ -67,10 +84,11 @@ CREATE TABLE product_images (
 CREATE TABLE product_units (
     id SERIAL PRIMARY KEY,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    variant_id INT REFERENCES product_variants(id) ON DELETE CASCADE,
     qr_code TEXT UNIQUE NOT NULL,
     blockchain_hash TEXT UNIQUE NOT NULL,
     is_used BOOLEAN DEFAULT FALSE,
-    used_at TIMESTAMP DEFAULT NONE,
+    used_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -113,6 +131,7 @@ CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
     order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id INT NOT NULL REFERENCES products(id),
+    variant_id INT REFERENCES product_variants(id),
     quantity INT NOT NULL CHECK (quantity > 0),
     price INT NOT NULL,
     total_price INT GENERATED ALWAYS AS (quantity * price) STORED
@@ -130,9 +149,22 @@ CREATE TABLE payments (
 );
 
 -- Indexes for performance optimization
-CREATE INDEX idx_product_units_product_id ON product_units(product_id);
+CREATE INDEX idx_product_images_product_id ON product_images(product_id);
+CREATE INDEX idx_product_variants_product_id ON product_variants(product_id);
+CREATE INDEX idx_product_variants_multi ON product_variants(product_id, size, color);
+CREATE INDEX idx_products_seller_id ON products(seller_id);
+CREATE INDEX idx_products_user_id ON products(user_id);
+CREATE INDEX idx_products_category_id ON products(category_id);
+CREATE INDEX idx_products_name_lower ON products(LOWER(name));
+CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
-CREATE INDEX idx_comments_product_id ON comments(product_id);
+CREATE INDEX idx_order_items_product_id ON order_items(product_id);
+CREATE INDEX idx_product_units_product_id ON product_units(product_id);
+CREATE INDEX idx_product_units_qr_code ON product_units(qr_code);
+CREATE INDEX idx_product_units_blockchain_hash ON product_units(blockchain_hash);
 CREATE INDEX idx_favorites_user_id ON favorites(user_id);
 CREATE INDEX idx_favorites_product_id ON favorites(product_id);
-CREATE INDEX idx_products_seller_id ON products(seller_id);
+CREATE INDEX idx_comments_user_id ON comments(user_id);
+CREATE INDEX idx_comments_product_id ON comments(product_id);
+CREATE INDEX idx_payments_order_id ON payments(order_id);
+CREATE INDEX idx_own_products_owner ON own_products(owner_id, is_seller);
