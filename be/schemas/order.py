@@ -3,16 +3,23 @@ from datetime import datetime
 from typing import Optional, List
 
 class OrderItem(BaseModel):
-    id: Optional[int] = None
-    product_id: int
-    quantity: int
-    price: Optional[int] = None
-    total_price: Optional[int] = None
+    product_id: Optional[int] = None
+    quantity: Optional[int] = None
+    blockchain_hash: Optional[str] = None
 
     class Config:
         from_attributes = True
+class OrderCreate(BaseModel):
+    items: List[OrderItem]
 
-class Order(BaseModel):
+class Item(BaseModel):    
+    product_id: int
+    name: str
+    image_url: str
+    price: int
+    quantity: int
+
+class OrderResponse(BaseModel):
     id: Optional[int] = None
     user_id: int
     total_amount: Optional[int] = None
@@ -20,7 +27,7 @@ class Order(BaseModel):
     blockchain_hash: Optional[str] = None
     created_at: datetime
 
-    items: List[OrderItem] = []
+    listItems: List[Item] = []
 
     class Config:
         from_attributes = True
