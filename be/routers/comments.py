@@ -8,8 +8,8 @@ from models.database import get_connection
 router = APIRouter(tags=["Comments"])
 
 @router.post("/comments/add", response_model=CommentResponse)
-async def create_comment_route(payload: CommentCreate, db: AsyncConnection = Depends(get_connection),):
-    comment = await create_comment(db, payload)
+async def create_comment_route(comment_data: CommentCreate, db: AsyncConnection = Depends(get_connection),):
+    comment = await create_comment(db, comment_data)
     if not comment:
         raise HTTPException(status_code=404, detail="Error")
     return comment

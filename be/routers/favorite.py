@@ -8,8 +8,8 @@ from schemas.favorite import FavoriteResponse, FavoriteCreate
 router = APIRouter()
 
 @router.post("/favorite/add")
-async def add_to_favorite(payload: FavoriteCreate, db: AsyncConnection = Depends(get_connection)):
-    await add_favorite(payload, db)
+async def add_to_favorite(favor_data: FavoriteCreate, db: AsyncConnection = Depends(get_connection)):
+    await add_favorite(favor_data, db)
     return {"message": "Add done"}
 
 @router.get("favorite/product/{user_id}", response_model=List[FavoriteResponse])

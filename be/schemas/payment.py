@@ -8,8 +8,9 @@ class PaymentBase(BaseModel):
     transaction_id: Optional[str] = None
     paid_amount: Optional[int] = None
 
-class PaymentCreate(PaymentBase):
-    pass
+class PaymentCreate(BaseModel):
+    order_id: int
+    method: str
 
 class PaymentUpdate(BaseModel):
     status: Optional[bool] = None
