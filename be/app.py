@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routers import auth, users, products, comments, favorite, order, category
+from routers import auth, users, products, comments, favorite, order, category, admin
 
 app = FastAPI(title="SmartVerify API", version="1.0")
 
@@ -25,6 +25,7 @@ app.include_router(comments.router, prefix="/api/v1", tags=["Comments"])
 app.include_router(favorite.router, prefix="/api/v1", tags=["Favorite"])
 app.include_router(order.router, prefix="/api/v1", tags=["Orders"])
 app.include_router(category.router, prefix="/api/v1", tags=["Categories"])
+app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
 
 @app.get("/")
 async def read_root():

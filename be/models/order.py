@@ -16,7 +16,6 @@ async def create_order(user_id: int, order_data: OrderCreate, db: AsyncConnectio
     blockchain_hash = generate_blockchain_hash()
     total_amount = 0
     async with db.cursor() as cur:
-        # Tạo đơn hàng ban đầu với tổng tiền = 0
         await cur.execute(query_insert_order, (user_id, total_amount, blockchain_hash))
         row = await cur.fetchone()
         order_id = row[0]
@@ -24,7 +23,6 @@ async def create_order(user_id: int, order_data: OrderCreate, db: AsyncConnectio
         items_detail = []
 
         for item in order_data.items:
-            # Lấy thông tin sản phẩm (gồm price, category)
             query_get_product = """
                 SELECT p.price, c.name AS category_name
                 FROM products p
@@ -40,7 +38,6 @@ async def create_order(user_id: int, order_data: OrderCreate, db: AsyncConnectio
             item_total = price * item.quantity
             total_amount += item_total
 
-            # Thêm item vào bảng order_items
             query_add_order_item = """
                 INSERT INTO order_items (order_id, product_id, quantity, price)
                 VALUES (%s, %s, %s, %s)
@@ -49,7 +46,6 @@ async def create_order(user_id: int, order_data: OrderCreate, db: AsyncConnectio
                 order_id, item.product_id, item.quantity, price
             ))
 
-            # Lấy variant liên quan
             query_variants = """
                 SELECT id, size, color, quantity, price, created_at
                 FROM product_variants
@@ -66,7 +62,6 @@ async def create_order(user_id: int, order_data: OrderCreate, db: AsyncConnectio
                 "created_at": v[5],
             } for v in variants]
 
-            # Lưu thông tin item chi tiết
             items_detail.append({
                 "product_id": item.product_id,
                 "quantity": item.quantity,
@@ -75,7 +70,6 @@ async def create_order(user_id: int, order_data: OrderCreate, db: AsyncConnectio
                 "variants": variant_list
             })
 
-        # Cập nhật tổng tiền cuối cùng vào bảng orders
         query_upd_order = """UPDATE orders SET total_amount = %s WHERE id = %s RETURNING created_at"""
         await cur.execute(query_upd_order, (total_amount, order_id))
         row = await cur.fetchone()
@@ -89,21 +83,138 @@ async def create_order(user_id: int, order_data: OrderCreate, db: AsyncConnectio
             "items": items_detail
         }
 
+async def get_orders_by_user_id(db: AsyncConnection, user_id: int):
+    query = """
+        SELECT id, user_id, total_amount, status, blockchain_hash, created_at
+        FROM orders
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+    """
+    async with db.cursor() as cur:
+        await cur.execute(query, (user_id,))
+        rows = await cur.fetchall()
+        return [
+            {
+                "id": r[0],
+                "user_id": r[1],
+                "total_amount": r[2],
+                "status": r[3],
+                "blockchain_hash": r[4],
+                "created_at": r[5],
+                "items": []
+            } for r in rows
+        ]
 
-async def get_order_by_id(db, order_id):
-   query = """SELECT """
+async def get_order_detail_by_id(db: AsyncConnection, order_id: int):
+    query_order = """
+        SELECT o.id, o.user_id, o.total_amount, o.status, o.blockchain_hash, o.created_at
+        FROM orders o
+        WHERE o.id = %s
+    """
+    query_items = """
+        SELECT oi.product_id, oi.quantity, oi.price, c.name AS category_name
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE oi.order_id = %s
+    """
+    query_variants = """
+        SELECT id, size, color, quantity, price, created_at
+        FROM product_variants
+        WHERE product_id = %s
+    """
 
-async def get_orders_by_user_id(db, user_id):
-    return None
+    async with db.cursor() as cur:
+        await cur.execute(query_order, (order_id,))
+        order_row = await cur.fetchone()
+        if not order_row:
+            return None
 
-async def get_orders_by_status(db, status):
-    return None
+        await cur.execute(query_items, (order_id,))
+        item_rows = await cur.fetchall()
 
-async def update_order_status(db, order_id, status):
-    return None
+        items_detail = []
+        for item in item_rows:
+            product_id, quantity, price, category_name = item
 
-async def delete_order(db, order_id):
-    return None
+            await cur.execute(query_variants, (product_id,))
+            variants = await cur.fetchall()
+            variant_list = [{
+                "id": v[0],
+                "size": v[1],
+                "color": v[2],
+                "quantity": v[3],
+                "price": v[4],
+                "created_at": v[5]
+            } for v in variants]
 
-async def get_orders_by_product_id(dc, product_id):
-    return None
+            items_detail.append({
+                "product_id": product_id,
+                "quantity": quantity,
+                "unit_price": price,
+                "category": category_name,
+                "variants": variant_list
+            })
+
+        return {
+            "id": order_row[0],
+            "user_id": order_row[1],
+            "total_amount": order_row[2],
+            "status": order_row[3],
+            "blockchain_hash": order_row[4],
+            "created_at": order_row[5],
+            "items": items_detail
+        }
+
+async def get_orders_by_status(db: AsyncConnection, status: str):
+    query = """
+        SELECT id, user_id, total_amount, blockchain_hash, created_at
+        FROM orders
+        WHERE status = %s
+        ORDER BY created_at DESC
+    """
+    async with db.cursor() as cur:
+        await cur.execute(query, (status,))
+        rows = await cur.fetchall()
+        return [
+            {
+                "id": r[0],
+                "user_id": r[1],
+                "total_amount": r[2],
+                "blockchain_hash": r[3],
+                "created_at": r[4]
+            } for r in rows
+        ]
+
+async def update_order_status(db: AsyncConnection, order_id: int, status: int):
+    query = """UPDATE orders SET status = %s WHERE id = %s"""
+    async with db.cursor() as cur:
+        await cur.execute(query, (status, order_id))
+    return {"message": "Order status updated", "order_id": order_id, "new_status": status}
+
+async def delete_order(db: AsyncConnection, order_id: int):
+    async with db.cursor() as cur:
+        await cur.execute("DELETE FROM order_items WHERE order_id = %s", (order_id,))
+        await cur.execute("DELETE FROM orders WHERE id = %s", (order_id,))
+    return {"message": "Order deleted", "order_id": order_id}
+
+async def get_orders_by_product_id(db: AsyncConnection, product_id: int):
+    query = """
+        SELECT oi.order_id, o.user_id, o.total_amount, o.status, o.created_at
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE oi.product_id = %s
+        ORDER BY o.created_at DESC
+    """
+    async with db.cursor() as cur:
+        await cur.execute(query, (product_id,))
+        rows = await cur.fetchall()
+        return [
+            {
+                "order_id": r[0],
+                "user_id": r[1],
+                "total_amount": r[2],
+                "status": r[3],
+                "created_at": r[4]
+            } for r in rows
+        ]

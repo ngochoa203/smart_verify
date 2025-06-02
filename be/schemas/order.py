@@ -21,9 +21,9 @@ class Item(BaseModel):
 
 class OrderResponse(BaseModel):
     id: Optional[int] = None
-    user_id: int
+    user_id: Optional[int] = None
     total_amount: Optional[int] = None
-    status: Optional[str] = 0
+    status: Optional[int]
     blockchain_hash: Optional[str] = None
     created_at: datetime
 
