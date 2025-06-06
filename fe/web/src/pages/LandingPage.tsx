@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
-export default function HomePage() {
+export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 to-white px-4 py-12">
       <div className="text-center max-w-2xl">
@@ -16,19 +16,19 @@ export default function HomePage() {
 
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link
-            href="/authen/login"
+            to="/authen/login"
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition"
           >
             Đăng nhập
           </Link>
           <Link
-            href="/authen/register"
+            to="/authen/register"
             className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition"
           >
             Đăng ký
           </Link>
           <Link
-            href="/verify"
+            to="/verify"
             className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition"
           >
             Kiểm tra hàng giả

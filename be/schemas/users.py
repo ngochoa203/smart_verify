@@ -7,16 +7,16 @@ class User(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     avatar_url: Optional[str] = None
-    is_active: Optional[bool] = True
+    is_active: Optional[bool] = None
 
 class UserCreate(User):
-    password_hash: Optional[str] = None
+    password: Optional[str] = None
 
 class UserUpdate(User):
     phone: Optional[str] = None
     address: Optional[str] = None
     avatar_url: Optional[str] = None
-    password_hash: Optional[str] = None
+    password: Optional[str] = None
     is_active: Optional[bool] = None
 
 class UserResponse(User):

@@ -1,29 +1,40 @@
-"use client";
-
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import bgImage from "@/assets/images/background.jpg";
+import axios from "axios";
+import { API_URL } from "../../services/api";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Giả lập login async
-    setTimeout(() => {
-      alert(`Đăng nhập với email: ${email}`);
-      setLoading(false);
-    }, 1500);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!username || !password) {
+    alert("Vui lòng điền đầy đủ thông tin!");
+    return;
+  }
+  setLoading(true);
+  try {
+    const res = await axios.post(`${API_URL}/authen`, { username, password });
+    alert(`Đăng nhập thành công! Chào mừng ${res.data.username} đến với SmartVerify!`);
+    window.location.href = "/";
+  } catch (error: any) {
+    console.error("Login error:", error);
+    const message = error?.response?.data?.detail || "Đăng nhập không thành công.";
+    alert(`Lỗi: ${message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div
       className="min-h-screen flex flex-col md:flex-row items-center justify-center py-10 px-6 bg-cover bg-center"
-      style={{ backgroundImage: "url('/images/background.jpg')" }}
+      style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="md:w-1/2 max-w-3xl min-h-[960px] flex flex-col justify-center bg-slate-500 bg-opacity-80 p-12 animate-fadeIn text-white">
         <h2 className="text-5xl font-extrabold mb-6 leading-tight">
@@ -37,9 +48,9 @@ export default function LoginPage() {
         </p>
         <p className="text-md">
           Chưa có tài khoản?{" "}
-          <a href="/authen/register" className="text-white underline font-bold hover:text-yellow-100">
+          <Link to="/authen/register" className="text-white underline font-bold hover:text-yellow-100">
             Đăng ký ngay
-          </a>
+          </Link>
         </p>
       </div>
 
@@ -51,17 +62,17 @@ export default function LoginPage() {
 
         <div className="space-y-8">
           <div>
-            <label htmlFor="email" className="block text-lg font-semibold text-gray-800 mb-2">
-              Email
+            <label htmlFor="username" className="block text-lg font-semibold text-gray-800 mb-2">
+              Tên đăng nhập
             </label>
             <input
-              id="email"
-              type="email"
+              id="username"
+              type="username"
               required
-              placeholder="Nhập email của bạn"
+              placeholder="Nhập username của bạn"
               className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
             />
           </div>
@@ -87,16 +98,17 @@ export default function LoginPage() {
               <input type="checkbox" className="h-4 w-4 text-blue-600" disabled={loading} />
               Ghi nhớ tôi
             </label>
-            <a href="/forgot-password" className="hover:text-blue-600 font-medium">
+            <Link to="/forgot-password" className="hover:text-blue-600 font-medium">
               Quên mật khẩu?
-            </a>
+            </Link>
           </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className={`mt-10 w-full py-4 text-lg text-white font-semibold rounded-lg shadow-lg transition-colors ${
+          className={`mt-10 w-full py-4 text-lg text-white font-semibold rounded-lg shadow-lg transition-colors 
+            ${
             loading ? "bg-blue-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
           }`}
         >

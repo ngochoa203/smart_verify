@@ -77,8 +77,8 @@ async def register_user(db: AsyncConnection, infor: UserCreate):
         if row:
             return 1
     
-    hashed_password = hash_pwd(infor.password_hash)
-    query = """ INSERT INTO users (username, email, password_hash, phone, address, avatar_url, is_active)
+    hashed_password = hash_pwd(infor.password)
+    query = """ INSERT INTO users (username, email, password, phone, address, avatar_url, is_active)
                 VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id, created_at"""
     async with db.cursor() as cur:
         await cur.execute(query, (
@@ -132,8 +132,8 @@ async def register_seller(db: AsyncConnection, infor: SellerCreate):
         if row:
             return 1
     
-    hashed_password = hash_pwd(infor.password_hash)
-    query = """ INSERT INTO sellers (username, email, password_hash, phone, shop_name, shop_description, logo_url, is_verified)
+    hashed_password = hash_pwd(infor.password)
+    query = """ INSERT INTO sellers (username, email, password, phone, shop_name, shop_description, logo_url, is_verified)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id, created_at"""
     async with db.cursor() as cur:
         await cur.execute(query, (

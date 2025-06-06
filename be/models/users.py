@@ -18,13 +18,13 @@ async def get_user_by_id(db: AsyncConnection, user_id: int):
             "created_at": row[8],
         }
 async def update_user(db: AsyncConnection, user_id: int, user_data: dict):
-    query = """UPDATE users SET username = %s, email = %s, password_hash = %s, phone = %s, address = %s, avatar_url = %s
-               WHERE id = %s RETURNING id, username, email, password_hash, phone, address, avatar_url, is_active, created_at"""
+    query = """UPDATE users SET username = %s, email = %s, password = %s, phone = %s, address = %s, avatar_url = %s
+               WHERE id = %s RETURNING id, username, email, password, phone, address, avatar_url, is_active, created_at"""
     async with db.cursor() as cur:
         await cur.execute(query, (
             user_data.username,
             user_data.email,
-            user_data.password_hash,
+            user_data.password,
             user_data.phone,
             user_data.address,
             user_data.avatar_url,

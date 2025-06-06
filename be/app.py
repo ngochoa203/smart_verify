@@ -2,16 +2,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from routers import auth, users, products, comments, favorite, order, category, admin
+from contextlib import asynccontextmanager
+from models.database import open_pool, close_pool
 
-app = FastAPI(title="SmartVerify API", version="1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await open_pool()
+    yield 
+    await close_pool()
+
+app = FastAPI(title="SmartVerify API", version="1.0", lifespan=lifespan)
 
 app.mount("/res", StaticFiles(directory="res"), name="res")
 
 # Set up CORS
-allowed_origins = ['http://localhost:3000']
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

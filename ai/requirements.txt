@@ -3,8 +3,6 @@ joblib==1.5.1
 pandas==2.2.3
 scikit-learn==1.6.1
 numpy==2.2.6
-# transformers==4.52.3
-# maturin==1.8.6
 torch==2.7.0
 accelerate==1.6.0
 aiohappyeyeballs==2.6.1

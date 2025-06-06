@@ -12,7 +12,7 @@ class Seller(BaseModel):
     is_active: Optional[bool] = False
 
 class SellerCreate(Seller):
-    password_hash: str
+    password: str
 
 class SellerResponse(Seller):
     id: int

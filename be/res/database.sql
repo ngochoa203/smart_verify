@@ -17,7 +17,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    password TEXT NOT NULL,
     phone VARCHAR(15),
     address TEXT,
     avatar_url TEXT,
@@ -29,7 +29,7 @@ CREATE TABLE sellers (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    password TEXT NOT NULL,
     phone VARCHAR(15),
     shop_name VARCHAR(100) NOT NULL,
     shop_description TEXT,
@@ -41,7 +41,7 @@ CREATE TABLE sellers (
 CREATE TABLE admins (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    password TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE categories (
