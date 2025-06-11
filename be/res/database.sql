@@ -49,7 +49,7 @@ CREATE TABLE categories (
     name TEXT NOT NULL,
     parent_id INT REFERENCES categories(id) ON DELETE SET NULL
 );
-INSERT INTO categories (name, parent_id) VALUES ('Thời Trang', NULL);
+INSERT INTO categories (name, parent_id) VALUES ('Root', NULL);
 
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
