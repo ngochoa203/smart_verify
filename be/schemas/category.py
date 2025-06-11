@@ -3,7 +3,7 @@ from typing import Optional, List
 
 class CategoryBase(BaseModel):
     name: str
-    parent_id: Optional[int] = None
+    parent_id: Optional[int] = 1
 
 class CategoryCreate(CategoryBase):
     pass
