@@ -1,0 +1,233 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Databases
+  auth-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+      - ./auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  product-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: product_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - product_db_data:/var/lib/postgresql/data
+      - ./product-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  inventory-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: inventory_db
+    ports:
+      - "5437:5432"
+    volumes:
+      - inventory_db_data:/var/lib/postgresql/data
+      - ./inventory-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  order-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: order_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+      - ./order-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  payment-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: payment_db
+    ports:
+      - "5438:5432"
+    volumes:
+      - payment_db_data:/var/lib/postgresql/data
+      - ./payment-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  review-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: review_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - review_db_data:/var/lib/postgresql/data
+      - ./review-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  favorite-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: favorite_db
+    ports:
+      - "5439:5432"
+    volumes:
+      - favorite_db_data:/var/lib/postgresql/data
+      - ./favorite-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  ai-agentic-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ai_agentic_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - ai_agentic_db_data:/var/lib/postgresql/data
+      - ./ai-agentic-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  # MindsDB
+  mindsdb:
+    image: mindsdb/mindsdb:latest
+    ports:
+      - "47334:47334"
+    environment:
+      - MDB_CONFIG_PATH=/opt/mindsdb/config.json
+    volumes:
+      - mindsdb_data:/opt/mindsdb
+    networks:
+      - ecommerce-network
+
+  # Microservices
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@auth-db:5432/auth_db
+    depends_on:
+      - auth-db
+    networks:
+      - ecommerce-network
+
+  product-service:
+    build: ./product-service
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@product-db:5432/product_db
+    depends_on:
+      - product-db
+    networks:
+      - ecommerce-network
+
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "8003:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@inventory-db:5432/inventory_db
+    depends_on:
+      - inventory-db
+    networks:
+      - ecommerce-network
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8004:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@order-db:5432/order_db
+    depends_on:
+      - order-db
+    networks:
+      - ecommerce-network
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8005:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@payment-db:5432/payment_db
+    depends_on:
+      - payment-db
+    networks:
+      - ecommerce-network
+
+  review-service:
+    build: ./review-service
+    ports:
+      - "8006:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@review-db:5432/review_db
+    depends_on:
+      - review-db
+    networks:
+      - ecommerce-network
+
+  favorite-service:
+    build: ./favorite-service
+    ports:
+      - "8007:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@favorite-db:5432/favorite_db
+    depends_on:
+      - favorite-db
+    networks:
+      - ecommerce-network
+
+  ai-agentic-service:
+    build: ./ai-agentic-service
+    ports:
+      - "8008:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@ai-agentic-db:5432/ai_agentic_db
+      - MINDSDB_URL=http://mindsdb:47334
+    depends_on:
+      - ai-agentic-db
+      - mindsdb
+    networks:
+      - ecommerce-network
+
+networks:
+  ecommerce-network:
+    driver: bridge
+
+volumes:
+  auth_db_data:
+  product_db_data:
+  inventory_db_data:
+  order_db_data:
+  payment_db_data:
+  review_db_data:
+  favorite_db_data:
+  ai_agentic_db_data:
+  mindsdb_data:
