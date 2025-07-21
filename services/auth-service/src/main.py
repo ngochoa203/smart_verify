@@ -3,18 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from src.database import engine
-from src.models import Base
 from src.routes.auth_routes import router as auth_router
 from src.config import settings
 
 # Create tables
-Base.metadata.create_all(bind=engine)
-
-# Create FastAPI app
 app = FastAPI(
     title="Auth Service",
     description="Authentication and authorization microservice for Smart Verify E-commerce",
-    version=settings.SERVICE_VERSION
 )
 
 # Add CORS middleware
@@ -34,13 +29,12 @@ app.include_router(auth_router, prefix="/api/v1")
 async def root():
     return {
         "message": f"{settings.SERVICE_NAME} is running",
-        "version": settings.SERVICE_VERSION,
         "docs": "/docs"
     }
 
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app",
+        "src.main:app",
         host="0.0.0.0",
         port=settings.SERVICE_PORT,
         reload=True

@@ -1,110 +1,97 @@
-from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, List
 from datetime import datetime
 
-# User Schemas
+# User schemas
 class UserBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
+    username: str
     email: EmailStr
-    phone: Optional[str] = Field(None, max_length=15)
+    phone: Optional[str] = None
     address: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8)
+    password: str
 
 class UserUpdate(BaseModel):
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    username: Optional[str] = None
     email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=15)
+    phone: Optional[str] = None
     address: Optional[str] = None
     avatar_url: Optional[str] = None
     is_active: Optional[bool] = None
 
 class UserResponse(UserBase):
     id: int
-    avatar_url: Optional[str]
     is_active: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-# Seller Schemas
+# Seller schemas
 class SellerBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
+    username: str
     email: EmailStr
-    phone: Optional[str] = Field(None, max_length=15)
-    shop_name: str = Field(..., min_length=2, max_length=100)
-    shop_description: Optional[str] = None
-
-class SellerCreate(SellerBase):
-    password: str = Field(..., min_length=8)
-
-class SellerUpdate(BaseModel):
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=15)
-    shop_name: Optional[str] = Field(None, min_length=2, max_length=100)
+    phone: Optional[str] = None
+    shop_name: str
     shop_description: Optional[str] = None
     logo_url: Optional[str] = None
 
+class SellerCreate(SellerBase):
+    password: str
+
+class SellerUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    shop_name: Optional[str] = None
+    shop_description: Optional[str] = None
+    logo_url: Optional[str] = None
+    is_verified: Optional[bool] = None
+
 class SellerResponse(SellerBase):
     id: int
-    logo_url: Optional[str]
     is_verified: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-# Admin Schemas
-class AdminCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=8)
-
-class AdminResponse(BaseModel):
-    id: int
+# Admin schemas
+class AdminBase(BaseModel):
     username: str
+
+class AdminCreate(AdminBase):
+    password: str
+
+class AdminResponse(AdminBase):
+    id: int
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-# Authentication Schemas
+# Authentication schemas
 class LoginRequest(BaseModel):
-    username: str
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
     password: str
 
 class LoginResponse(BaseModel):
     access_token: str
-    token_type: str = "bearer"
-    expires_in: int
-    user_id: int
-    user_type: str  # "user", "seller", "admin"
+    token_type: str
 
-class TokenData(BaseModel):
-    username: Optional[str] = None
-    user_id: Optional[int] = None
-    user_type: Optional[str] = None
-
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str
-
-# Password Reset Schemas
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+    user_type: str = Field(..., description="Type of user: 'user', 'seller', or 'admin'")
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    new_password: str = Field(..., min_length=8)
+    new_password: str
 
 class PasswordResetResponse(BaseModel):
     message: str
 
-# Common Response Schemas
 class MessageResponse(BaseModel):
     message: str
-
-class ErrorResponse(BaseModel):
-    detail: str
-    error_code: Optional[str] = None

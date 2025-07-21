@@ -1,224 +1,197 @@
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List, Optional
 
-from src.models import User, Seller, Admin
-from src.schemas.auth_schemas import (
+from fastapi import HTTPException
+from ..schemas.auth_schemas import (
     UserCreate, UserUpdate, UserResponse,
     SellerCreate, SellerUpdate, SellerResponse,
     AdminCreate, AdminResponse,
     LoginRequest, LoginResponse,
-    ForgotPasswordRequest, ResetPasswordRequest, PasswordResetResponse
+    ForgotPasswordRequest, ResetPasswordRequest, PasswordResetResponse,
+    MessageResponse
 )
-from src.services.auth_service import AuthService
-from src.services.email_service import EmailService
-from src.config import settings
+from ..models import User, Seller, Admin
+from sqlalchemy.orm import Session
+from ..services.auth_service import AuthService
 
+def register_user(data: UserCreate, db: Session):
+    # Use text() to explicitly specify the schema
+    from sqlalchemy import text
+    result = db.execute(text("SELECT * FROM auth_service.users WHERE email = :email"), {"email": data.email}).first()
+    if result:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = AuthService.create_user(db, data)
+    return UserResponse.from_orm(user)
+
+def register_seller(data: SellerCreate, db: Session):
+    if db.query(Seller).filter(Seller.email == data.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    seller = AuthService.create_seller(db, data)
+    return SellerResponse.from_orm(seller)
+
+def login(data: LoginRequest, db: Session):
+    email = str(data.email) if data.email else (str(data.username) if data.username else "")
+    user, user_type = AuthService.authenticate_user(db, email, data.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    # Always check which table the user is in to set user_type correctly
+    from src.models import User, Seller, Admin
+    role = None
+    if db.query(User).filter(User.email == email).first():
+        role = "user"
+    elif db.query(Seller).filter(Seller.email == email).first():
+        role = "seller"
+    elif db.query(Admin).filter(Admin.username == email).first():
+        role = "admin"
+    else:
+        role = user_type
+    token = AuthService.create_access_token({"sub": getattr(user, "username", None), "user_type": role})
+    return LoginResponse(access_token=token, token_type="bearer")
+
+def forgot_password(request: ForgotPasswordRequest, db: Session):
+    # Kiểm tra email tồn tại
+    if request.user_type == "user":
+        user = db.query(User).filter(User.email == request.email).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+    elif request.user_type == "seller":
+        seller = db.query(Seller).filter(Seller.email == request.email).first()
+        if not seller:
+            raise HTTPException(status_code=404, detail="Seller not found")
+    elif request.user_type == "admin":
+        admin = db.query(Admin).filter(Admin.username == request.email).first()
+        if not admin:
+            raise HTTPException(status_code=404, detail="Admin not found")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid user_type")
+    reset = AuthService.create_password_reset(db, request.email, request.user_type)
+    # TODO: Gửi email chứa token cho user
+    return PasswordResetResponse(message="Password reset token created. Check your email.")
+
+def reset_password(request: ResetPasswordRequest, db: Session):
+    ok = AuthService.reset_password(db, request.token, request.new_password)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    return PasswordResetResponse(message="Password reset successful.")
+
+# Bọc các hàm controller vào class AuthController để import đúng chuẩn
 class AuthController:
-    
     @staticmethod
-    def register_user(user_data: UserCreate, db: Session) -> UserResponse:
-        """Register a new user"""
-        # Check if username already exists
-        if AuthService.get_user_by_username(db, user_data.username):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already registered"
-            )
-        
-        # Check if email already exists
-        if AuthService.get_user_by_email(db, user_data.email):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
-        
-        # Create user
-        user = AuthService.create_user(db, user_data)
-        
-        # Send welcome email
-        EmailService.send_welcome_email(user.email, user.username, "user")
-        
+    def register_user(data: UserCreate, db: Session):
+        # Use text() to explicitly specify the schema
+        from sqlalchemy import text
+        result = db.execute(text("SELECT * FROM auth_service.users WHERE email = :email"), {"email": data.email}).first()
+        if result:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        user = AuthService.create_user(db, data)
         return UserResponse.from_orm(user)
-    
+
     @staticmethod
-    def register_seller(seller_data: SellerCreate, db: Session) -> SellerResponse:
-        """Register a new seller"""
-        # Check if username already exists
-        if AuthService.get_seller_by_username(db, seller_data.username):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already registered"
-            )
-        
-        # Check if email already exists
-        if AuthService.get_seller_by_email(db, seller_data.email):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
-        
-        # Create seller
-        seller = AuthService.create_seller(db, seller_data)
-        
-        # Send welcome email
-        EmailService.send_welcome_email(seller.email, seller.username, "seller")
-        
+    def register_seller(data: SellerCreate, db: Session):
+        if db.query(Seller).filter(Seller.email == data.email).first():
+            raise HTTPException(status_code=400, detail="Email already registered")
+        seller = AuthService.create_seller(db, data)
         return SellerResponse.from_orm(seller)
-    
+
     @staticmethod
-    def login(login_data: LoginRequest, db: Session) -> LoginResponse:
-        """Authenticate user/seller/admin and return JWT token"""
-        user, user_type = AuthService.authenticate_user(db, login_data.username, login_data.password)
-        
+    def login(data: LoginRequest, db: Session):
+        email = str(data.email) if data.email else (str(data.username) if data.username else "")
+        user, user_type = AuthService.authenticate_user(db, email, data.password)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Create access token
-        access_token = AuthService.create_access_token(
-            data={
-                "sub": user.username,
-                "user_id": user.id,
-                "user_type": user_type
-            }
-        )
-        
-        return LoginResponse(
-            access_token=access_token,
-            token_type="bearer",
-            expires_in=settings.JWT_EXPIRATION_HOURS * 3600,  # Convert to seconds
-            user_id=user.id,
-            user_type=user_type
-        )
-    
-    @staticmethod
-    def forgot_password(request: ForgotPasswordRequest, db: Session) -> PasswordResetResponse:
-        """Initiate password reset process"""
-        # Check which type of user has this email
-        user = AuthService.get_user_by_email(db, request.email)
-        seller = AuthService.get_seller_by_email(db, request.email)
-        
-        user_type = None
-        if user:
-            user_type = "user"
-        elif seller:
-            user_type = "seller"
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        # Lấy đúng role thực tế từ bảng
+        role = None
+        from src.models import User, Seller, Admin
+        if db.query(User).filter(User.email == email).first():
+            role = "user"
+        elif db.query(Seller).filter(Seller.email == email).first():
+            role = "seller"
+        elif db.query(Admin).filter(Admin.username == email).first():
+            role = "admin"
         else:
-            # Don't reveal if email exists or not for security
-            return PasswordResetResponse(message="If the email exists, a reset link will be sent")
-        
-        # Create password reset request
-        reset_request = AuthService.create_password_reset(db, request.email, user_type)
-        
-        # Send reset email
-        EmailService.send_password_reset_email(request.email, reset_request.token)
-        
-        return PasswordResetResponse(message="If the email exists, a reset link will be sent")
-    
+            role = user_type
+        token = AuthService.create_access_token({"sub": getattr(user, "username", None), "user_type": role})
+        return LoginResponse(access_token=token, token_type="bearer")
+
     @staticmethod
-    def reset_password(request: ResetPasswordRequest, db: Session) -> PasswordResetResponse:
-        """Reset password using token"""
-        success = AuthService.reset_password(db, request.token, request.new_password)
-        
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired reset token"
-            )
-        
-        return PasswordResetResponse(message="Password has been reset successfully")
-    
+    def forgot_password(request: ForgotPasswordRequest, db: Session):
+        # Kiểm tra email tồn tại
+        if request.user_type == "user":
+            user = db.query(User).filter(User.email == request.email).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+        elif request.user_type == "seller":
+            seller = db.query(Seller).filter(Seller.email == request.email).first()
+            if not seller:
+                raise HTTPException(status_code=404, detail="Seller not found")
+        elif request.user_type == "admin":
+            admin = db.query(Admin).filter(Admin.username == request.email).first()
+            if not admin:
+                raise HTTPException(status_code=404, detail="Admin not found")
+        else:
+            raise HTTPException(status_code=400, detail="Invalid user_type")
+        reset = AuthService.create_password_reset(db, request.email, request.user_type)
+        # TODO: Gửi email chứa token cho user
+        return PasswordResetResponse(message="Password reset token created. Check your email.")
+
     @staticmethod
-    def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[UserResponse]:
-        """Get all users (admin only)"""
+    def reset_password(request: ResetPasswordRequest, db: Session):
+        ok = AuthService.reset_password(db, request.token, request.new_password)
+        if not ok:
+            raise HTTPException(status_code=400, detail="Invalid or expired token")
+        return PasswordResetResponse(message="Password reset successful.")
+
+    # User management
+    @staticmethod
+    def get_users(db: Session, skip: int = 0, limit: int = 100):
         users = db.query(User).offset(skip).limit(limit).all()
-        return [UserResponse.from_orm(user) for user in users]
-    
+        return [UserResponse.from_orm(u) for u in users]
+
     @staticmethod
-    def get_user_by_id(user_id: int, db: Session) -> UserResponse:
-        """Get user by ID"""
+    def get_user_by_id(user_id: int, db: Session):
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=404, detail="User not found")
         return UserResponse.from_orm(user)
-    
+
     @staticmethod
-    def update_user(user_id: int, user_update: UserUpdate, db: Session) -> UserResponse:
-        """Update user information"""
+    def update_user(user_id: int, user_update: UserUpdate, db: Session):
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
-        # Update fields
+            raise HTTPException(status_code=404, detail="User not found")
         for field, value in user_update.dict(exclude_unset=True).items():
             setattr(user, field, value)
-        
         db.commit()
         db.refresh(user)
         return UserResponse.from_orm(user)
-    
+
     @staticmethod
-    def delete_user(user_id: int, db: Session) -> dict:
-        """Delete user"""
+    def delete_user(user_id: int, db: Session):
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
+            raise HTTPException(status_code=404, detail="User not found")
         db.delete(user)
         db.commit()
-        return {"message": "User deleted successfully"}
-    
+        return MessageResponse(message="User deleted")
+
+    # Seller management
     @staticmethod
-    def get_sellers(db: Session, skip: int = 0, limit: int = 100) -> List[SellerResponse]:
-        """Get all sellers"""
+    def get_sellers(db: Session, skip: int = 0, limit: int = 100):
         sellers = db.query(Seller).offset(skip).limit(limit).all()
-        return [SellerResponse.from_orm(seller) for seller in sellers]
-    
+        return [SellerResponse.from_orm(s) for s in sellers]
+
     @staticmethod
-    def verify_seller(seller_id: int, db: Session) -> SellerResponse:
-        """Verify seller (admin only)"""
+    def verify_seller(seller_id: int, db: Session):
         seller = db.query(Seller).filter(Seller.id == seller_id).first()
         if not seller:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Seller not found"
-            )
-        
-        seller.is_verified = True
+            raise HTTPException(status_code=404, detail="Seller not found")
+        setattr(seller, "is_verified", True)
         db.commit()
         db.refresh(seller)
-        
-        # Send verification success email
-        EmailService.send_email(
-            [seller.email],
-            "Seller Account Verified - Smart Verify",
-            f"Hello {seller.username},\n\nYour seller account has been verified! You can now start selling on Smart Verify.\n\nBest regards,\nSmart Verify Team"
-        )
-        
         return SellerResponse.from_orm(seller)
-    
+
+    # Admin management
     @staticmethod
-    def create_admin(admin_data: AdminCreate, db: Session) -> AdminResponse:
-        """Create admin (super admin only)"""
-        # Check if username already exists
-        if AuthService.get_admin_by_username(db, admin_data.username):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already registered"
-            )
-        
+    def create_admin(admin_data: AdminCreate, db: Session):
+        if db.query(Admin).filter(Admin.username == admin_data.username).first():
+            raise HTTPException(status_code=400, detail="Admin username already exists")
         admin = AuthService.create_admin(db, admin_data)
         return AdminResponse.from_orm(admin)

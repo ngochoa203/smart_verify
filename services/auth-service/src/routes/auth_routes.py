@@ -79,7 +79,7 @@ async def health_check():
     return {"status": "healthy", "service": "auth-service"}
 
 # Authentication endpoints
-@router.post("/auth/register", response_model=UserResponse)
+@router.post("/user/register", response_model=UserResponse)
 async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     return AuthController.register_user(user_data, db)
@@ -182,10 +182,9 @@ async def verify_seller(
 @router.post("/admins", response_model=AdminResponse)
 async def create_admin(
     admin_data: AdminCreate,
-    db: Session = Depends(get_db),
-    current_admin = Depends(get_current_admin)
+    db: Session = Depends(get_db)
 ):
-    """Create admin (admin only)"""
+    """Create admin (no authentication required)"""
     return AuthController.create_admin(admin_data, db)
 
 # Profile endpoints
