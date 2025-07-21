@@ -1,23 +1,44 @@
 #!/bin/bash
 
-# Smart Verify E-commerce Microservices Manager
-
+# Smart Verify E-commerce Microservices Manager (Revised)
 set -e
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Functions
+# Fixed service names
+services=(
+    "auth-service"
+    "product-service"
+    "inventory-service"
+    "order-service"
+    "payment-service"
+    "review-service"
+    "favorite-service"
+    "ai-agentic-service"
+    "cart-service"
+)
+
+ports=(
+    8001
+    8002
+    8003
+    8004
+    8005
+    8006
+    8007
+    8008
+    8009
+)
+
 print_header() {
-    echo -e "${BLUE}"
-    echo "=========================================="
-    echo "  Smart Verify E-commerce Services"
-    echo "=========================================="
-    echo -e "${NC}"
+    echo -e "${BLUE}==========================================
+  Smart Verify E-commerce Services
+==========================================${NC}"
 }
 
 print_success() {
@@ -32,7 +53,6 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
-# Check if Docker is running
 check_docker() {
     if ! docker info > /dev/null 2>&1; then
         print_error "Docker is not running. Please start Docker first."
@@ -40,119 +60,140 @@ check_docker() {
     fi
 }
 
-# Build all services
+remove_dangling_images() {
+    print_header
+    echo "🧹 Removing dangling (none) images..."
+    docker image prune -f
+    print_success "Dangling images removed."
+}
+
+remove_all_images() {
+    print_header
+    echo -e "${RED}⚠️  This will remove ALL Docker images from your system!${NC}"
+    read -p "Are you sure you want to delete ALL Docker images? [y/N]: " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        docker rmi -f $(docker images -aq) || true
+        print_success "All Docker images have been removed."
+    else
+        print_warning "Aborted. No images were removed."
+    fi
+}
+
 build_services() {
     print_header
     echo "🔨 Building all microservices..."
-    
-    # Build each service
-    services=("auth-service" "product-service" "inventory-service" "order-service" "payment-service" "review-service" "favorite-service" "ai-agentic-service")
-    
     for service in "${services[@]}"; do
-        echo "Building $service..."
-        docker build -t smart-verify-$service ./$service/
+        dir="${service/sv-/}"
+        echo "Building $service (./$dir/)..."
+        docker build -t $service ./$dir/
         print_success "$service built successfully"
     done
 }
 
-# Start all services
 start_services() {
     print_header
     echo "🚀 Starting all services..."
-    
-    docker-compose up -d
-    
-    # Wait a bit for services to start
+    # Start all services explicitly
+    docker-compose up -d ${services[@]}
     echo "⏳ Waiting for services to start..."
     sleep 10
-    
-    # Check service health
     check_services_health
 }
 
-# Stop all services
 stop_services() {
     print_header
     echo "🛑 Stopping all services..."
-    
     docker-compose down
     print_success "All services stopped"
 }
 
-# Check services health
+select_service() {
+    echo "Select a service:" >&2
+    for i in "${!services[@]}"; do
+        echo "$((i+1))) ${services[$i]}" >&2
+    done
+    read -p "Enter number [1-${#services[@]}]: " idx
+    if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le ${#services[@]} ]; then
+        echo "${services[$((idx-1))]}"
+    else
+        print_error "Invalid selection" >&2
+        exit 1
+    fi
+}
+
+start_service() {
+    sname=$(select_service)
+    docker-compose up -d $sname
+    print_success "$sname started"
+}
+
+stop_service() {
+    sname=$(select_service)
+    docker-compose stop $sname
+    print_success "$sname stopped"
+}
+
+logs_service() {
+    sname=$(select_service)
+    docker-compose logs -f $sname
+}
+
 check_services_health() {
     echo "🏥 Checking services health..."
-    
-    services=(
-        "auth-service:8001"
-        "product-service:8002" 
-        "inventory-service:8003"
-        "order-service:8004"
-        "payment-service:8005"
-        "review-service:8006"
-        "favorite-service:8007"
-        "ai-agentic-service:8008"
-    )
-    
-    for service in "${services[@]}"; do
-        name=$(echo $service | cut -d: -f1)
-        port=$(echo $service | cut -d: -f2)
-        
+    for i in "${!services[@]}"; do
+        name="${services[$i]}"
+        port="${ports[$i]}"
         if curl -s http://localhost:$port/health > /dev/null; then
-            print_success "$name is healthy"
+            print_success "$name is healthy (port $port)"
         else
-            print_warning "$name is not responding"
+            print_warning "$name is not responding (port $port)"
         fi
     done
 }
 
-# Setup databases
 setup_databases() {
     print_header
     echo "🗄️  Setting up databases..."
-    
-    # Start only database services first
-    docker-compose up -d auth-db product-db inventory-db order-db payment-db review-db favorite-db ai-agentic-db
-    
+    docker-compose up -d auth-db product-db inventory-db order-db payment-db review-db favorite-db ai-agentic-db cart-db
     echo "⏳ Waiting for databases to be ready..."
     sleep 15
     
-    # Run Alembic migrations for each service
-    services=("auth-service" "product-service" "inventory-service" "order-service" "payment-service" "review-service" "favorite-service" "ai-agentic-service")
+    # Initialize schemas
+    echo "Initializing database schemas..."
+    ./init_schemas.sh
     
+    # Run migrations
     for service in "${services[@]}"; do
         echo "Running migrations for $service..."
-        cd $service
-        # In production, you would run: alembic upgrade head
-        echo "Migrations for $service would run here"
-        cd ..
+        if [ -d "$service/alembic" ]; then
+            cd $service
+            echo "Running alembic migrations..."
+            # In production: alembic upgrade head
+            echo "Migrations for $service would run here"
+            cd ..
+        else
+            echo "No alembic directory found for $service, skipping migrations"
+        fi
     done
-    
     print_success "Databases setup completed"
-    cd ..
 }
 
-# Seed sample data
 seed_data() {
     print_header
     echo "🌱 Seeding sample data..."
-    
     python seed_data.py
-    
     print_success "Sample data seeded successfully"
 }
 
-# View logs
 view_logs() {
     docker-compose logs -f
 }
 
-# Show service URLs
 show_urls() {
     print_header
     echo "🌐 Service URLs:"
     echo ""
-    echo "� Auth Service:      http://localhost:8001"
+    echo "🔑 Auth Service:      http://localhost:8001"
     echo "📦 Product Service:   http://localhost:8002"
     echo "📋 Inventory Service: http://localhost:8003"
     echo "🛒 Order Service:     http://localhost:8004"
@@ -160,20 +201,15 @@ show_urls() {
     echo "⭐ Review Service:    http://localhost:8006"
     echo "❤️  Favorite Service: http://localhost:8007"
     echo "🤖 AI Agentic Service: http://localhost:8008"
+    echo "🛍️  Cart Service:     http://localhost:8009"
     echo "🧠 MindsDB:          http://localhost:47334"
     echo ""
     echo "📊 Health Check URLs:"
-    echo "   http://localhost:8001/health"
-    echo "   http://localhost:8002/health"
-    echo "   http://localhost:8003/health"
-    echo "   http://localhost:8004/health"
-    echo "   http://localhost:8005/health"
-    echo "   http://localhost:8006/health"
-    echo "   http://localhost:8007/health"
-    echo "   http://localhost:8008/health"
+    for port in "${ports[@]}"; do
+        echo "   http://localhost:$port/health"
+    done
 }
 
-# Main menu
 show_menu() {
     print_header
     echo "Please select an option:"
@@ -186,12 +222,14 @@ show_menu() {
     echo "6) 🏥 Check services health"
     echo "7) 📋 View logs"
     echo "8) 🌐 Show service URLs"
-    echo "9) 🔄 Full setup (build + start + seed)"
+    echo "9) 🧹 Remove dangling images"
+    echo "10) ▶️  Start a service"
+    echo "11) ⏹️  Stop a service"
+    echo "12) 📝 Logs for a service"
     echo "0) ❌ Exit"
     echo ""
 }
 
-# Full setup
 full_setup() {
     check_docker
     build_services
@@ -203,14 +241,12 @@ full_setup() {
     print_success "Full setup completed! 🎉"
 }
 
-# Main script
 main() {
     check_docker
-    
     if [ $# -eq 0 ]; then
         while true; do
             show_menu
-            read -p "Enter your choice [0-9]: " choice
+            read -p "Enter your choice [0-12]: " choice
             case $choice in
                 1) build_services ;;
                 2) setup_databases ;;
@@ -220,7 +256,16 @@ main() {
                 6) check_services_health ;;
                 7) view_logs ;;
                 8) show_urls ;;
-                9) full_setup ;;
+                9) remove_dangling_images ;;
+                10)
+                    start_service
+                    ;;
+                11)
+                    stop_service
+                    ;;
+                12)
+                    logs_service
+                    ;;
                 0) echo "Goodbye! 👋"; exit 0 ;;
                 *) print_error "Invalid option. Please try again." ;;
             esac
@@ -237,14 +282,18 @@ main() {
             health) check_services_health ;;
             logs) view_logs ;;
             urls) show_urls ;;
+            prune) remove_dangling_images ;;
+            start-service) start_service ;;
+            stop-service) stop_service ;;
+            logs-service) logs_service ;;
             full) full_setup ;;
-            *) 
-                echo "Usage: $0 {build|setup|start|stop|seed|health|logs|urls|full}"
+            remove-all-images) remove_all_images ;;
+            *)
+                echo "Usage: $0 {build|setup|start|stop|seed|health|logs|urls|prune|start-service <name>|stop-service <name>|logs-service <name>|full|remove-all-images}"
                 exit 1
             ;;
         esac
     fi
 }
 
-# Run main function
 main "$@"

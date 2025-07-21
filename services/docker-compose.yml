@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Databases
   auth-db:
@@ -12,7 +10,6 @@ services:
       - "5432:5432"
     volumes:
       - auth_db_data:/var/lib/postgresql/data
-      - ./auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ecommerce-network
 
@@ -26,7 +23,6 @@ services:
       - "5433:5432"
     volumes:
       - product_db_data:/var/lib/postgresql/data
-      - ./product-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ecommerce-network
 
@@ -40,7 +36,6 @@ services:
       - "5437:5432"
     volumes:
       - inventory_db_data:/var/lib/postgresql/data
-      - ./inventory-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ecommerce-network
 
@@ -54,7 +49,6 @@ services:
       - "5435:5432"
     volumes:
       - order_db_data:/var/lib/postgresql/data
-      - ./order-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ecommerce-network
 
@@ -68,7 +62,6 @@ services:
       - "5438:5432"
     volumes:
       - payment_db_data:/var/lib/postgresql/data
-      - ./payment-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ecommerce-network
 
@@ -82,7 +75,6 @@ services:
       - "5434:5432"
     volumes:
       - review_db_data:/var/lib/postgresql/data
-      - ./review-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ecommerce-network
 
@@ -96,7 +88,6 @@ services:
       - "5439:5432"
     volumes:
       - favorite_db_data:/var/lib/postgresql/data
-      - ./favorite-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ecommerce-network
 
@@ -110,7 +101,19 @@ services:
       - "5436:5432"
     volumes:
       - ai_agentic_db_data:/var/lib/postgresql/data
-      - ./ai-agentic-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+
+  cart-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cart_db
+    ports:
+      - "5440:5432"
+    volumes:
+      - cart_db_data:/var/lib/postgresql/data
     networks:
       - ecommerce-network
 
@@ -217,6 +220,17 @@ services:
     networks:
       - ecommerce-network
 
+  cart-service:
+    build: ./cart-service
+    ports:
+      - "8009:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@cart-db:5432/cart_db
+    depends_on:
+      - cart-db
+    networks:
+      - ecommerce-network
+
 networks:
   ecommerce-network:
     driver: bridge
@@ -230,4 +244,5 @@ volumes:
   review_db_data:
   favorite_db_data:
   ai_agentic_db_data:
+  cart_db_data:
   mindsdb_data:
