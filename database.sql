@@ -61,6 +61,11 @@ CREATE TABLE products (
     category_id INT REFERENCES categories(id) ON DELETE SET NULL,
     price INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    CHECK (
+      (seller_id IS NOT NULL AND user_id IS NULL)
+      OR
+      (seller_id IS NULL AND user_id IS NOT NULL)
+    )
 );
 CREATE TABLE product_variants (
     id SERIAL PRIMARY KEY,

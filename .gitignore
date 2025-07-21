@@ -1,97 +1,97 @@
-# ====================
-# GLOBAL
-# ====================
-*.log
-*.env
-.env.*
+# Python
 __pycache__/
 *.py[cod]
-*.sqlite3
-*.db
-*.DS_Store
-*.swp
-log/
-# Python venv
-venv/
-env/
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv*/
+env*/
 .venv/
+ENV/
+.env
+.env.*
 
-# ====================
-# BACKEND & AI (FastAPI + AI modules)
-# ====================
-# Byte-compiled / optimized / DLL files
-*.pyc
-*.pyo
-*.pyd
-
-# PyInstaller
-*.spec
-
-# Pip environment
-pip-log.txt
-
-# mypy
-.mypy_cache/
-
-# Pytest
-.pytest_cache/
-
-# coverage
-htmlcov/
-.coverage
-.cache
-
-res/images/
-res/qrcode/
-# ====================
-# FRONTEND (Flutter)
-# ====================
-build/
-.dart_tool/
-.packages
-.pub-cache/
-.flutter-plugins
-.flutter-plugins-dependencies
-generated_plugin_registrant.dart
-
-# iOS
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-ios/.symlinks
-ios/Pods
-ios/Runner.xcworkspace
-ios/build/
-
-# Android
-android/.gradle/
-android/captures/
-android/build/
-
-# macOS
-macos/Flutter/ephemeral/
-macos/build/
-
-# Web
-web/build/
+# Node/Frontend
+node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/dist/
 frontend/build/
 
-# ====================
-# IDE / OS Files
-# ====================
+# IDE & Editor
 .idea/
 .vscode/
-*.iml
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
 
-# ====================
-# Docker / Database
-# ====================
-docker/*.pid
-postgres_data/
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.sqlite3
+*.db
+
+# Docker
+.docker/
 docker-compose.override.yml
-config/secrets.json
-docker/secrets/
+
+# Alembic
+alembic/versions/*.py
+!alembic/versions/__init__.py
+
+# MindsDB
+mindsdb_data/
+
+# QR codes
+qr_codes/
+
+# Uploads & Media
+uploads/
+media/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Coverage & Test
+htmlcov/
+.tox/
+.coverage*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+
+# Misc
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+
+# Local env
+.env.development
+.env.test
+.env.production
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
